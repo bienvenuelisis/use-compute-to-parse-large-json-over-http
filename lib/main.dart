@@ -29,17 +29,19 @@ List<EmptyObject> _parseJsonContent(String encodedJson) {
 }
 
 class _MainAppState extends State<MainApp> {
+  int? _fileSize;
+  bool _loading = false;
+
   @override
   void initState() {
     super.initState();
-    _parseLargeJsonFileInMainThread();
+    //_parseLargeJsonFileInMainThread();
   }
-
-  int? _fileSize;
 
   Future<void> _parseLargeJsonFile(Function(String) parser) async {
     setState(() {
       _fileSize = null;
+      _loading = true;
     });
 
     final response = await http.get(
@@ -53,6 +55,7 @@ class _MainAppState extends State<MainApp> {
 
     setState(() {
       _fileSize = response.contentLength;
+      _loading = false;
     });
   }
 
@@ -73,22 +76,25 @@ class _MainAppState extends State<MainApp> {
     return MaterialApp(
       home: Scaffold(
         body: Center(
-          child: _fileSize == null
+          child: _loading
               ? const CircularProgressIndicator()
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Parsed json file size: ${(_fileSize! / (1024 * 1024)).round()} MB',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
+                    if (_fileSize != null)
+                      Text(
+                        'Parsed json file size: ${(_fileSize! / (1024 * 1024)).round()} MB',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     TextButton(
                       onPressed: _parseLargeJsonFileInMainThread,
-                      child: const Text('Retry'),
+                      child: const Text('Download and parse large json file'),
                     ),
                     TextButton(
                       onPressed: _parseLargeJsonFileInBackground,
-                      child: const Text('Retry using compute'),
+                      child: const Text(
+                        'Download and parse large json file using compute',
+                      ),
                     ),
                   ],
                 ),
